@@ -21,15 +21,21 @@ using Newtonsoft.Json.Linq;
 namespace Tables
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// 主窗口，实现了INotifyPropertyChanged接口以支持数据绑定和属性更改通知。
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         #region Static Resources
+        /// <summary>
+        /// 任务文件名，用于存储和加载任务数据。
+        /// </summary>
         public static string fileName = "tasks.json";
         #endregion
 
         #region Attributes
+        /// <summary>
+        /// 任务集合，存储所有任务。
+        /// </summary>
         private ObservableCollection<Task> tasks;
         public ObservableCollection<Task> Tasks
         {
@@ -44,6 +50,9 @@ namespace Tables
             }
         }
 
+        /// <summary>
+        /// 当前选中的任务。
+        /// </summary>
         private Task selectedTask;
         public Task SelectedTask
         {
@@ -60,6 +69,9 @@ namespace Tables
         #endregion
 
         #region Constructors
+        /// <summary>
+        /// MainWindow构造函数，初始化窗口并加载任务数据。
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -71,12 +83,18 @@ namespace Tables
         #endregion
 
         #region Event Handling
+        /// <summary>
+        /// 添加按钮点击事件处理程序，将新任务添加到任务集合中并保存数据。
+        /// </summary>
         private void buttonAdd_Click(object sender, RoutedEventArgs e)
         {
             Tasks.Add(new Task(textBox.Text));
             SerializeTasks();
         }
 
+        /// <summary>
+        /// 删除按钮点击事件处理程序，删除选中的任务并保存数据。
+        /// </summary>
         private void buttonDelete_Click(object sender, RoutedEventArgs e)
         {
             if (SelectedTask != null)
@@ -99,6 +117,9 @@ namespace Tables
         #endregion
 
         #region PropertyChangedNotifier
+        /// <summary>
+        /// 属性更改事件处理程序，用于通知绑定到属性的控件更新。
+        /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string name)
         {
@@ -110,6 +131,9 @@ namespace Tables
         #endregion
 
         #region Serialization
+        /// <summary>
+        /// 序列化任务集合到JSON字符串并保存到文件。
+        /// </summary>
         public void SerializeTasks()
         {
             string json = JsonConvert.SerializeObject(Tasks);
@@ -121,6 +145,9 @@ namespace Tables
             }
         }
 
+        /// <summary>
+        /// 从文件加载JSON字符串并反序列化为任务集合。
+        /// </summary>
         public void DeserializeTasks()
         {
             if (File.Exists(fileName))
@@ -135,6 +162,11 @@ namespace Tables
         }
         #endregion
 
+        /// <summary>
+        /// 向DashScope API发送请求，生成基于当前任务列表的建议文本。
+        /// </summary>
+        /// <param name="user_content">用户输入的内容。</param>
+        /// <returns>API返回的建议文本。</returns>
         private string Send_Qwen(string user_content)
         {
             string api_key = "sk-957abfc22958436e99fe4157216528b3";
@@ -162,12 +194,22 @@ namespace Tables
             IRestResponse response = client.Execute(request);
             return response.Content;
         }
+
+        /// <summary>
+        /// 解析API响应，提取建议文本。
+        /// </summary>
+        /// <param name="Qwen_Response">API的原始响应。</param>
+        /// <returns>提取出的建议文本。</returns>
         private string Analyse_Qwen_Response(string Qwen_Response)
         {
             JObject jsonObject = JObject.Parse(Qwen_Response);
             string content = jsonObject["output"]["choices"][0]["message"]["content"].ToString();
             return content;
         }
+
+        /// <summary>
+        /// 处理生成建议的按钮点击事件。
+        /// </summary>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             string prompt = Generate_Prompt();
@@ -176,6 +218,10 @@ namespace Tables
             suggestion_TextBox.Text = response_toShow;
         }
 
+        /// <summary>
+        /// 根据当前任务列表生成用于API输入的prompt。
+        /// </summary>
+        /// <returns>生成的prompt字符串。</returns>
         private string Generate_Prompt()
         {
             string json = JsonConvert.SerializeObject(Tasks);
